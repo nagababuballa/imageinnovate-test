@@ -1,0 +1,9 @@
+{
+  "employeeId": "E123",
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "phoneNumbers": ["1234567890", "0987654321"],
+  "doj": "2023-05-16",
+  "salary": 50000
+}

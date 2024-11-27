@@ -1,68 +1,51 @@
-/*
 package com.example.demo.configuration;
 
-import com.example.demo.exception.JwtException;
-import com.example.demo.util.JwtUtil;
+import com.example.demo.filter.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.security.authentication.ReactiveAuthenticationManagerResolver;
-import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.util.StringUtils;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.CorsConfigurationSource;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
-import org.springframework.web.server.ServerWebExchange;
-import reactor.core.publisher.Mono;
-
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
-import static ch.qos.logback.classic.PatternLayout.HEADER_PREFIX;
 
+@EnableWebSecurity
 @Configuration
 public class SecurityConfig {
-    private final JwtUtil jwtUtil;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
     private static final String[] WHITE_LIST_URL = {
             "/swagger-resources",
             "/swagger-resources/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
-            "/auth/**"
+            "/auth/**",
+            "/api/**"
     };
+
     @Autowired
-    public SecurityConfig(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
-    ReactiveAuthenticationManagerResolver<ServerWebExchange> resolver() {
-        return exchange -> {
-            String token = resolveToken(exchange.getRequest());
-            if (token == null) throw new JwtException("Token cannot be null");
-            return Mono.just(new AuthenticationManager(jwtUtil));
-        };
-    }
-    private String resolveToken(ServerHttpRequest request) {
-        String bearerToken = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(HEADER_PREFIX)) {
-            return bearerToken.substring(7);
-        }
-        return  null;
-    }
+
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         System.out.println("inside security filter");
         http.cors(corsSpec -> corsSpec.configurationSource(corsConfigurationSource()))
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authorizeExchange(requests ->
-                        requests.pathMatchers(WHITE_LIST_URL)
+            .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(requests ->
+                        requests.requestMatchers(WHITE_LIST_URL)
                                 .permitAll()
-                                .anyExchange()
+                                .anyRequest()
                                 .authenticated())
-                .oauth2ResourceServer(oAuth2ResourceServerSpec ->
-                        oAuth2ResourceServerSpec.authenticationManagerResolver(resolver()));
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
     @Bean
@@ -80,5 +63,4 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
-
-}*/
+}

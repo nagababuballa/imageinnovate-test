@@ -1,4 +1,3 @@
-/*
 package com.example.demo.util;
 
 import io.jsonwebtoken.Claims;
@@ -9,11 +8,11 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 import java.util.function.Function;
-
 import static com.example.demo.util.Constant.SIGNING_KEY;
 
+
 @Component
-public class JwtUtil {
+public class JwtTokenUtil {
 
     private Key getSignKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SIGNING_KEY);
@@ -45,4 +44,4 @@ public class JwtUtil {
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
-}*/
+}
